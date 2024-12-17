@@ -8,11 +8,12 @@ from langfuse import Langfuse
 from langfuse.client import ObservationsView, TraceWithDetails
 from loguru import logger
 from ragas import evaluate
+from ragas.metrics.base import Metric as RagasMetric
 
 from dify_eval.evaluation import constants, ragas_models
 from dify_eval.evaluation.metrics import retrieval_evaluate
 
-load_dotenv()
+load_dotenv(override=True)
 
 langfuse = Langfuse()
 
@@ -118,10 +119,7 @@ def do_trace_evaluate(
     }
 
     retrieval_metrics = [m for m in metrics if isinstance(m, str) and m in constants.RETRIEVAL_METRICS]
-    ragas_metrics = [
-        m for m in metrics 
-        if m not in constants.RETRIEVAL_METRICS
-    ]
+    ragas_metrics = [m for m in metrics if isinstance(m, RagasMetric)]
     try:
         if ragas_metrics:
             raw_ragas_evaluate(data_sample, ragas_metrics, trace.id)
