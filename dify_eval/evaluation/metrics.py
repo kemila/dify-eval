@@ -11,7 +11,7 @@ load_dotenv()
 
 langfuse = Langfuse()
 
-def retrieve_f1(predicted_result: list, ground_truth: list):
+def retrieve_f1(predicted_result: set, ground_truth: set):
     """
     Calculate F1 score
     """
@@ -21,7 +21,7 @@ def retrieve_f1(predicted_result: list, ground_truth: list):
         if recall + precision > 0 else 0
     return f1
 
-def retrieve_recall(predicted_result: list, ground_truth: list):
+def retrieve_recall(predicted_result: set, ground_truth: set):
     """
     Calculate recall
     """
@@ -29,7 +29,7 @@ def retrieve_recall(predicted_result: list, ground_truth: list):
         if ground_truth else 0
     return recall
 
-def retrieve_precision(predicted_result: list, ground_truth: list):
+def retrieve_precision(predicted_result: set, ground_truth: set):
     """
     Calculate precision
     """
@@ -37,7 +37,7 @@ def retrieve_precision(predicted_result: list, ground_truth: list):
         if predicted_result else 0
     return precision
 
-def retrieve_iou(predicted_result: list, ground_truth: list):
+def retrieve_iou(predicted_result: set, ground_truth: set):
     """
     Calculate Intersection over Union (IoU)
     """
@@ -45,7 +45,7 @@ def retrieve_iou(predicted_result: list, ground_truth: list):
         if ground_truth | predicted_result else 0
     return iou
 
-def retrieval_ndcg(predicted_result: list, ground_truth: list):
+def retrieval_ndcg(predicted_result: set, ground_truth: set):
     """
     Calculate Normalized Discounted Cumulative Gain (NDCG)
     """
@@ -76,7 +76,7 @@ def retrieval_ndcg(predicted_result: list, ground_truth: list):
 
     return ndcg
 
-def retrieval_mrr(predicted_result: list, ground_truth: list):
+def retrieval_mrr(predicted_result: set, ground_truth: set):
     """
     Reciprocal Rank (RR) is the reciprocal of the rank of the first relevant item.
     Mean of RR in whole queries is MRR.
@@ -88,7 +88,7 @@ def retrieval_mrr(predicted_result: list, ground_truth: list):
             return 1 / (i + 1)
     return 0
 
-def retrieval_map(predicted_result: list, ground_truth: list = []):
+def retrieval_map(predicted_result: set, ground_truth: set):
     """
     Mean Average Precision (MAP) is the mean of Average Precision (AP) for each query.
     """
