@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Optional
 
@@ -7,15 +8,9 @@ from langfuse import Langfuse
 from langfuse.client import ObservationsView, TraceWithDetails
 from loguru import logger
 from ragas import evaluate
-from ragas.metrics import (
-    answer_correctness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    faithfulness,
-)
 
 from dify_eval.evaluation import constants, ragas_models
+from dify_eval.evaluation.metrics import retrieval_evaluate
 
 load_dotenv()
 
@@ -90,16 +85,18 @@ def do_trace_evaluate(
     QUERY_KEY = "sys.query"
     ANSWER_KEY = "answer"
 
+    trace_input = json.loads(trace.input)
+    trace_output = json.loads(trace.output)
     logger.info(
-        f" >> Start evaluate trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)}"
+        f" >> Start evaluate trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)}"
     )
     knowledge_retrieval_observations = get_knowledge_retrieval_observations(trace.id)
     logger.debug(
-        f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} got {len(knowledge_retrieval_observations)} knowledge retrievals"
+        f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} got {len(knowledge_retrieval_observations)} knowledge retrievals"
     )
     if not knowledge_retrieval_observations:
         logger.warning(
-            f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} has no knowledge retrievals, skip evaluation"
+            f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} has no knowledge retrievals, skip evaluation"
         )
         return
 
@@ -112,19 +109,27 @@ def do_trace_evaluate(
     )
 
     data_sample = {
-        "question": [trace.input.get(QUERY_KEY, trace.input)],
-        "answer": [trace.output.get(ANSWER_KEY, trace.output)],
+        "question": [trace_input.get(QUERY_KEY, trace_input)],
+        "answer": [trace_output.get(ANSWER_KEY, trace_output)],
         "contexts": [trace_knowlege_retrieval_content],
         "ground_truth": [
-            ground_truth_map.get(trace.input.get(QUERY_KEY, trace.input), "")
+            ground_truth_map.get(trace_input.get(QUERY_KEY, trace_input), "")
         ],
     }
 
+    retrieval_metrics = [m for m in metrics if isinstance(m, str) and m in constants.RETRIEVAL_METRICS]
+    ragas_metrics = [
+        m for m in metrics 
+        if m not in constants.RETRIEVAL_METRICS
+    ]
     try:
-        raw_ragas_evaluate(data_sample, metrics, trace.id)
+        if ragas_metrics:
+            raw_ragas_evaluate(data_sample, ragas_metrics, trace.id)
+        if retrieval_metrics:
+            retrieval_evaluate(data_sample, retrieval_metrics, trace.id)
     except Exception as e:
         logger.exception(
-            f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} evaluate got error: {e}"
+            f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} evaluate got error: {e}"
         )
 
 
