@@ -13,7 +13,7 @@ from ragas.metrics.base import Metric as RagasMetric
 from dify_eval.evaluation import constants, ragas_models
 from dify_eval.evaluation.metrics import retrieval_evaluate
 
-load_dotenv(override=True)
+load_dotenv()
 
 langfuse = Langfuse()
 
