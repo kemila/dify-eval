@@ -86,18 +86,16 @@ def do_trace_evaluate(
     QUERY_KEY = "sys.query"
     ANSWER_KEY = "answer"
 
-    trace_input = json.loads(trace.input)
-    trace_output = json.loads(trace.output)
     logger.info(
-        f" >> Start evaluate trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)}"
+        f" >> Start evaluate trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)}"
     )
     knowledge_retrieval_observations = get_knowledge_retrieval_observations(trace.id)
     logger.debug(
-        f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} got {len(knowledge_retrieval_observations)} knowledge retrievals"
+        f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} got {len(knowledge_retrieval_observations)} knowledge retrievals"
     )
     if not knowledge_retrieval_observations:
         logger.warning(
-            f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} has no knowledge retrievals, skip evaluation"
+            f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} has no knowledge retrievals, skip evaluation"
         )
         return
 
@@ -110,11 +108,11 @@ def do_trace_evaluate(
     )
 
     data_sample = {
-        "question": [trace_input.get(QUERY_KEY, trace_input)],
-        "answer": [trace_output.get(ANSWER_KEY, trace_output)],
+        "question": [trace.input.get(QUERY_KEY, trace.input)],
+        "answer": [trace.output.get(ANSWER_KEY, trace.output)],
         "contexts": [trace_knowlege_retrieval_content],
         "ground_truth": [
-            ground_truth_map.get(trace_input.get(QUERY_KEY, trace_input), "")
+            ground_truth_map.get(trace.input.get(QUERY_KEY, trace.input), "")
         ],
     }
 
@@ -127,7 +125,7 @@ def do_trace_evaluate(
             retrieval_evaluate(data_sample, retrieval_metrics, trace.id)
     except Exception as e:
         logger.exception(
-            f"Trace {trace.id} with {trace_input.get(QUERY_KEY, trace_input)} evaluate got error: {e}"
+            f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} evaluate got error: {e}"
         )
 
 
@@ -144,8 +142,10 @@ def do_evaluate(
         f"Page {page} with limit {limit}, {len(traces)} traces found, start evaluating..."
     )
 
-    for idx in range(len(traces)):
-        do_trace_evaluate(metrics, traces[idx], ground_truth_map)
+    for trace in traces:
+        trace.input = json.loads(trace.input) if isinstance(trace.input, str) else trace.input
+        trace.output = json.loads(trace.output) if isinstance(trace.output, str) else trace.output
+        do_trace_evaluate(metrics, trace, ground_truth_map)
 
     return len(traces)
 
