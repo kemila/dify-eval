@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Optional
 
@@ -7,15 +8,10 @@ from langfuse import Langfuse
 from langfuse.client import ObservationsView, TraceWithDetails
 from loguru import logger
 from ragas import evaluate
-from ragas.metrics import (
-    answer_correctness,
-    answer_relevancy,
-    context_precision,
-    context_recall,
-    faithfulness,
-)
+from ragas.metrics.base import Metric as RagasMetric
 
 from dify_eval.evaluation import constants, ragas_models
+from dify_eval.evaluation.metrics import retrieval_evaluate
 
 load_dotenv()
 
@@ -120,8 +116,13 @@ def do_trace_evaluate(
         ],
     }
 
+    retrieval_metrics = [m for m in metrics if isinstance(m, str) and m in constants.RETRIEVAL_METRICS]
+    ragas_metrics = [m for m in metrics if isinstance(m, RagasMetric)]
     try:
-        raw_ragas_evaluate(data_sample, metrics, trace.id)
+        if ragas_metrics:
+            raw_ragas_evaluate(data_sample, ragas_metrics, trace.id)
+        if retrieval_metrics:
+            retrieval_evaluate(data_sample, retrieval_metrics, trace.id)
     except Exception as e:
         logger.exception(
             f"Trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)} evaluate got error: {e}"
@@ -141,8 +142,10 @@ def do_evaluate(
         f"Page {page} with limit {limit}, {len(traces)} traces found, start evaluating..."
     )
 
-    for idx in range(len(traces)):
-        do_trace_evaluate(metrics, traces[idx], ground_truth_map)
+    for trace in traces:
+        trace.input = json.loads(trace.input) if isinstance(trace.input, str) else trace.input
+        trace.output = json.loads(trace.output) if isinstance(trace.output, str) else trace.output
+        do_trace_evaluate(metrics, trace, ground_truth_map)
 
     return len(traces)
 

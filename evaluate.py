@@ -9,6 +9,14 @@ DEFAULT_METRICS = [
     metrics.context_precision,
     metrics.context_recall,
     metrics.faithfulness,
+    metrics.answer_similarity,
+    'retrieve_f1',
+    'retrieve_recall', 
+    'retrieve_precision',
+    'retrieve_iou',
+    'retrieve_ndcg',
+    'retrieve_mrr',
+    'retrieve_map'
 ]
 
 if __name__ == "__main__":
