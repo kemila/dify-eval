@@ -53,12 +53,16 @@ def save_results(
     if not output_path:
         current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
         local_path = f'results/{os.getenv("RUN_NAME", "")}_{current_time}.csv'
-
+    else:
+        local_path = output_path
+    logger.info(f"Save results to {output_path}")
+    logger.info(f"Save results to {local_path}")
+    if not local_path:
+        local_path = f'results/{os.getenv("RUN_NAME", "")}_{current_time}.csv'
     parent_folder = os.path.dirname(local_path)
     if not os.path.exists(parent_folder):
         os.makedirs(parent_folder)
-
-    logger.info(f"Save results to {local_path}")
+    
     df.to_csv(local_path, index=False)
 
 
@@ -86,6 +90,9 @@ async def run_dataset_generation(
     items = dataset.items
     if time_asc_submit:
         items = list(reversed(items))
+
+    # 先返回 LLM问太慢了
+    return
 
     for item in items:
         task = asyncio.create_task(run_dataset_item(item, run_name, semaphore))

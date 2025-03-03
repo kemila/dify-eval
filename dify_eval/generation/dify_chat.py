@@ -1,3 +1,9 @@
+'''
+Description: 
+Author: zhengqi
+Date: 2025-02-13 15:15:43
+LastEditTime: 2025-02-17 17:05:35
+'''
 import os
 from typing import Literal
 
@@ -5,10 +11,12 @@ import aiohttp
 from dotenv import load_dotenv
 from loguru import logger
 from tenacity import retry, stop_after_attempt, wait_fixed
+# from langfuse.decorators import observe, langfuse_context
+
 
 load_dotenv()
 
-
+# @observe(name="HelloWorld")
 @retry(stop=stop_after_attempt(10), wait=wait_fixed(3))
 async def send_chat_message(
     query: str,
@@ -35,7 +43,7 @@ async def send_chat_message(
         "files": file_array,
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(chat_url, headers=headers, json=payload) as response:
+        async with session.post(chat_url, headers=headers, json=payload, ssl=False) as response:
             ret = await response.json()
             status = ret.get("status")
             message = ret.get("message")
@@ -52,3 +60,6 @@ async def send_chat_message(
                 logger.exception(f"Request with {query} got empty answer")
                 raise ValueError("Empty answer")
             return ret
+
+
+# langfuse_context.flush()

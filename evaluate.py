@@ -1,15 +1,21 @@
+'''
+Description: 
+Author: zhengqi
+Date: 2025-02-13 15:15:43
+LastEditTime: 2025-02-24 17:34:44
+'''
 from ragas import metrics
 
 from dify_eval.evaluation import evaluation
 
 # Refer to ragas https://docs.ragas.io/en/stable/concepts/metrics/index.html
 DEFAULT_METRICS = [
-    metrics.answer_correctness,
-    metrics.answer_relevancy,
-    metrics.context_precision,
-    metrics.context_recall,
-    metrics.faithfulness,
-    metrics.answer_similarity,
+    # metrics.answer_correctness,
+    # metrics.answer_relevancy,
+    # metrics.context_precision,
+    # metrics.context_recall,
+    # metrics.faithfulness,
+    # metrics.answer_similarity,
     'retrieve_f1',
     'retrieve_recall', 
     'retrieve_precision',

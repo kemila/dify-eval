@@ -24,6 +24,7 @@ def get_run_traces(
     limit: int = constants.BATCH_SIZE,
 ) -> list[TraceWithDetails]:
     return langfuse.fetch_traces(user_id=user_id, page=page, limit=limit).data
+    # return langfuse.fetch_traces().data
 
 
 def get_trace_observations(trace_id: str) -> list[ObservationsView]:
@@ -32,7 +33,9 @@ def get_trace_observations(trace_id: str) -> list[ObservationsView]:
 
 def identify_knowledge_retrieval(observation: ObservationsView) -> bool:
     KNOWLEDGE_RETRIEVAL_NAME = "knowledge-retrieval"
-
+    # 问题??? 线上产生的trance name是dataset_retrieval llm 没有 knowledge-retrieval
+    # KNOWLEDGE_RETRIEVAL_NAME = "dataset_retrieval"
+    
     if observation.name == KNOWLEDGE_RETRIEVAL_NAME:
         return True
     else:
@@ -83,8 +86,10 @@ def do_trace_evaluate(
     trace: TraceWithDetails,
     ground_truth_map: dict = {},
 ):
-    QUERY_KEY = "sys.query"
-    ANSWER_KEY = "answer"
+    # QUERY_KEY = "sys.query"
+    # ANSWER_KEY = "answer"
+    QUERY_KEY = "question"
+    ANSWER_KEY = "text"
 
     logger.info(
         f" >> Start evaluate trace {trace.id} with {trace.input.get(QUERY_KEY, trace.input)}"
@@ -106,13 +111,18 @@ def do_trace_evaluate(
     logger.debug(
         f"Trace {trace.id} got {len(trace_knowlege_retrieval_content)} contexts"
     )
-
+    # trace_knowlege_retrieval_content为空 找不到对应的内容
+    # testQ = '煤化工工程数字化移交规范的交付基础有哪些?'
+    # testA = '工厂分解结构 工厂对象'
     data_sample = {
         "question": [trace.input.get(QUERY_KEY, trace.input)],
         "answer": [trace.output.get(ANSWER_KEY, trace.output)],
+        # "question": [testQ],
+        # "answer": [testA],
         "contexts": [trace_knowlege_retrieval_content],
         "ground_truth": [
             ground_truth_map.get(trace.input.get(QUERY_KEY, trace.input), "")
+            # ground_truth_map.get(testQ, "")
         ],
     }
 
@@ -143,8 +153,8 @@ def do_evaluate(
     )
 
     for trace in traces:
-        trace.input = json.loads(trace.input) if isinstance(trace.input, str) else trace.input
-        trace.output = json.loads(trace.output) if isinstance(trace.output, str) else trace.output
+        # trace.input = json.loads(trace.input) if isinstance(trace.input, str) else trace.input
+        # trace.output = json.loads(trace.output) if isinstance(trace.output, str) else trace.output
         do_trace_evaluate(metrics, trace, ground_truth_map)
 
     return len(traces)
